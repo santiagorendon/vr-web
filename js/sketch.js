@@ -5,7 +5,7 @@ var textholder;
 var cockpitImage;
 var elevation;
 var state = 'playing';
-var plane1, plane2;
+var tarmac, ground;
 var torusArray = [];
 var score = 0;
 var user;
@@ -22,7 +22,7 @@ function setup() {
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
 
-  plane1 = new Plane({ // tarmac
+  tarmac = new Plane({ // tarmac
     x: 0,
     y: 0.1,
     width: 10,
@@ -33,14 +33,14 @@ function setup() {
     rotationX: -90
   });
 
-  plane2 = new Plane({ // regular ground
-    width: 1000,
-    height: 1000,
+  ground = new Plane({ // regular ground
+    width: 3000,
+    height: 3000,
     rotationX: -90
   });
 
-  container2.add(plane1);
-  container2.add(plane2);
+  container2.add(tarmac);
+  container2.add(ground);
   world.add(container2);
 
 
@@ -100,8 +100,8 @@ function draw() {
       scaleY: 3
     });
     container.addChild(plane3);
-    container2.remove(plane2);
-    container2.remove(plane1);
+    container2.remove(ground);
+    container2.remove(tarmac);
 
     // remove score
     cockpitImage.tag.setAttribute('text',
