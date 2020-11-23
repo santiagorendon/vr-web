@@ -1,51 +1,40 @@
 <!doctype html>
 <html lang="en-us">
 	<head>
-    <title>VR WEB</title>
 		<meta charset="UTF-8">
 
 		<!-- P5 libraries -->
-		<script src="js/p5.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
 
 		<!-- A-Frame libraries -->
-		<script src="js/aframe.min.js"></script>
+		<script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
 
 		<!-- AFrameP5 library -->
-		<script src="js/aframep5.js"></script>
+		<script src="https://craignyu.github.io/aframep5/libraries/aframep5.js"></script>
 
 		<!-- P5 Sketch -->
-		<script src="js/index.js"></script>
+		<script src="sketch.js"></script>
 
-		<!-- custom styles -->
-		<style>
-			body {
-				padding: 0;
-				margin: 0;
-			}
-		</style>
+		<script src="../p5/addons/p5.sound.min.js"></script>
+
 	</head>
 	<body>
 
-		<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
-	    <a-scene id="VRScene">
+		<!-- container to hold our VR scene -->
+		<a-scene id="VRScene">
 
-	    	<!--
-		       The 'a-assets' container is used to load in any external artwork you may want to use as "textures" for your objects.
-		       Ensure that this element has an ID of 'VRAssets'
+		  <!-- container to hold our assets -->
+		  <a-assets>
+		    <img id="stonebrick" src="images/stonebrick.png">
+				<img src="images/sky.webp" id="sky1"></a-assets>
+				<img src="images/cockpit.png" id="cockpit"></a-assets>
+				<a-asset id="cloud.mtl" src="images/cloud.mtl"></a-asset>
+				<a-asset id="cloud.obj" src="images/cloud.obj"></a-asset>
+		  </a-assets>
+			<a-sky id="theSky" src="#sky1""></a-sky>
 
-		       Textures can be loaded by creating a new 'a-asset' tag inside of the 'a-assets' container.
-		       When doing this you will need to make sure to give your textures a unique ID -
-		       this will be used by p5 to create new objects.
 
-		       Example:
-
-		       <img id="ITEM_ID_GOES_HERE" src="images/gold_block.png">
-			-->
-
-			<a-assets id="VRAssets">
-
-			</a-assets>
-	    </a-scene>
+		</a-scene>
 
 	</body>
 </html>
