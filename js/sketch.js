@@ -22,6 +22,7 @@ var renderCushion = 80; //distance to start rendering before reaching render dis
 var cloudDensity = Math.round(0.4*renderDistance);
 var torusDensity = Math.round(0.1*renderDistance);
 var asteroidDensity = Math.round(0.1*renderDistance);
+var shootButton
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -30,6 +31,7 @@ function preload() {
 function setup() {
   noCanvas();
   world = new World('VRScene', 'gaze');
+
   world.setFlying(true);
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
@@ -60,7 +62,7 @@ function setup() {
   // add image to HUD
   cockpitImage = new Plane({
     x: 0,
-    y: -0.25,
+    y: 0,
     z: 0,
     scaleX: 3,
     scaleY: 3,
@@ -69,13 +71,34 @@ function setup() {
   });
   container.addChild(cockpitImage);
   world.camera.cursor.addChild(container);
+
+  shootButton = new Cylinder({
+     x: .2,
+     y: -.5,
+     z: 0,
+     red: 255,
+     green: 0,
+     blue: 0,
+     radius: .05,
+     height: .1,
+     rotationX: 45,
+     clickFunction: function(me){
+       console.log(me)
+       projectiles.push(new Projectile());
+     }
+    });
+
+    container.addChild(shootButton);
+
 }
 
-function keyPressed() {
-  if (keyCode === 32) { // space bar pressed
-    projectiles.push(new Projectile());
-  }
-}
+
+
+// function keyPressed() {
+//   if (keyCode === 32) { // space bar pressed
+//     projectiles.push(new Projectile());
+//   }
+// }
 
 function drawProjectiles() {
   for (let i = 0; i < projectiles.length; i++) {
@@ -226,6 +249,8 @@ function draw() {
     }
   }
 }
+
+
 
 class Projectile {
   constructor() {
