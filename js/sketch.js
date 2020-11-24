@@ -22,7 +22,10 @@ var renderCushion = 80; //distance to start rendering before reaching render dis
 var cloudDensity = Math.round(0.4*renderDistance);
 var torusDensity = Math.round(0.1*renderDistance);
 var asteroidDensity = Math.round(0.1*renderDistance);
-var shootButton
+var shootButton;
+var scorePlane;
+var speedPlane;
+var planeSpeedRounded
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -34,10 +37,28 @@ function setup() {
   world.camera.cursor.show();
 
 
+
   world.setFlying(true);
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
-
+  scorePlane = new Plane({
+    x: 0,
+    y: -.2,
+    z: 0,
+    width: 1,
+    height: 1,
+    transparent: true,
+    opacity: 0
+  })
+  speedPlane = new Plane({
+    x: 0,
+    y: -.3,
+    z: 0,
+    width: 1,
+    height: 1,
+    transparent: true,
+    opacity: 0
+  })
   tarmac = new Plane({ // tarmac
     x: 0,
     y: 0.1,
@@ -72,8 +93,11 @@ function setup() {
     asset: 'cockpit',
   });
   container.addChild(cockpitImage);
-  world.camera.cursor.addChild(container);
+  container.addChild(scorePlane)
+  container.addChild(speedPlane)
 
+
+  world.camera.cursor.addChild(container);
   accelerateButton = new Cylinder({
      x: .2,
      y: -.5,
@@ -223,6 +247,10 @@ function draw() {
   removeAsteroids();
   drawProjectiles();
 
+  planeSpeedRounded = planeSpeed * 500
+  planeSpeedRounded = Math.round(planeSpeedRounded)
+
+
   user = world.getUserPosition(); // user's position
   elevation = world.getUserPosition().y; // user's y
   elevation = Math.round(elevation); // round it
@@ -236,7 +264,7 @@ function draw() {
   if (state == 'crash') { // create a blank game over field
     let plane3 = new Plane({
       x: 0,
-      y: -0.5,
+      y: 0,
       z: 0,
       scaleX: 3,
       scaleY: 3
@@ -246,15 +274,18 @@ function draw() {
     container2.remove(tarmac);
 
     // remove score
-    cockpitImage.tag.setAttribute('text',
-      'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+    scorePlane.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+    speedPlane.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+
     // tell user it's game over
     plane3.tag.setAttribute('text',
       'value: ' + ('game over') + '; color: rgb(0,0,0); align: center;');
   } else { // when plane is not crashed
     world.moveUserForward(planeSpeed); // move
     distanceTraveled = world.camera.getZ();
-    cockpitImage.tag.setAttribute('text', 'value: ' + (score) + '; color: rgb(0,0,0); align: center;');
+    scorePlane.tag.setAttribute('text', 'value: ' + "Score: " + (score) + '; color: rgb(255,255,255); align: center;');
+    speedPlane.tag.setAttribute('text', 'value: ' + "Speed: " + (planeSpeedRounded) + '; color: rgb(255,255,255); align: center;');
+
 
     // if user gets a point
     for (let i = 0; i < torusArray.length; i++) {
