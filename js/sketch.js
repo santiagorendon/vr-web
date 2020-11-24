@@ -30,7 +30,9 @@ function preload() {
 
 function setup() {
   noCanvas();
-  world = new World('VRScene', 'gaze');
+  world = new World('VRScene');
+  world.camera.cursor.show();
+
 
   world.setFlying(true);
   container = new Container3D({});
@@ -72,23 +74,41 @@ function setup() {
   container.addChild(cockpitImage);
   world.camera.cursor.addChild(container);
 
-  shootButton = new Cylinder({
+  accelerateButton = new Cylinder({
      x: .2,
      y: -.5,
      z: 0,
-     red: 255,
-     green: 0,
+     red: 0,
+     green: 255,
      blue: 0,
      radius: .05,
      height: .1,
      rotationX: 45,
      clickFunction: function(me){
-       console.log(me)
-       projectiles.push(new Projectile());
+       planeSpeed += .1
      }
     });
 
-    container.addChild(shootButton);
+    deaccelerateButton = new Cylinder({
+       x: -.2,
+       y: -.5,
+       z: 0,
+       red: 255,
+       green: 0,
+       blue: 0,
+       radius: .05,
+       height: .1,
+       rotationX: 45,
+       clickFunction: function(me){
+         if (planeSpeed >= .1){
+           planeSpeed -= .1
+         }
+       }
+      });
+
+    container.addChild(accelerateButton);
+    container.addChild(deaccelerateButton);
+
 
 }
 
@@ -210,7 +230,7 @@ function draw() {
   if (elevation <= 0) { // if they go too low, game is over
     state = 'crash';
   } else if (elevation >= 2) { // increase speed once taken off
-    planeSpeed = 0.15;
+    // planeSpeed = 0.15;
   }
 
   if (state == 'crash') { // create a blank game over field
