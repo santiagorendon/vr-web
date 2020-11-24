@@ -16,11 +16,12 @@ var sound;
 var distanceTraveled = 0;
 var planeSpeed = 0.05;
 /* graphic settings */
-var renderDistance = 500;
-var renderCushion = 250; //distance to start rendering before reaching render distance
-var cloudDensity = 80;
-var torusDensity = 30;
-var asteroidDensity = 100;
+var currentRender = 0;
+var renderDistance = 200;
+var renderCushion = 80; //distance to start rendering before reaching render distance
+var cloudDensity = Math.round(0.4*renderDistance);
+var torusDensity = Math.round(0.1*renderDistance);
+var asteroidDensity = Math.round(0.1*renderDistance);
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -32,12 +33,6 @@ function setup() {
   world.setFlying(true);
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
-
-  if (distanceTraveled % (renderDistance - renderCushion) === 0) {
-    createClouds();
-    createToruses();
-    createAsteroids();
-  }
 
   tarmac = new Plane({ // tarmac
     x: 0,
@@ -140,7 +135,7 @@ function removeClouds() {
 }
 
 function createClouds() {
-  let startPoint = distanceTraveled - renderCushion;
+  let startPoint = -distanceTraveled - renderCushion;
   //start rendering clouds closer if its first set rendered
   if (distanceTraveled === 0) {
     startPoint = 0;
@@ -173,6 +168,12 @@ function createToruses() {
 }
 
 function draw() {
+  if (distanceTraveled < -currentRender+renderCushion) {
+    currentRender += renderDistance;
+    createClouds();
+    createToruses();
+    createAsteroids();
+  }
   // dont render objects that the plane no longer sees
   removeClouds();
   removeToruses();
@@ -269,7 +270,7 @@ class Cloud {
       asset: 'cloud.obj',
       mtl: 'cloud.mtl',
       x: random(-200, 200),
-      y: random(15, 100),
+      y: random(10, 100),
       z: random(start, end),
       scaleX: 3,
       scaleY: 3,
