@@ -60,7 +60,7 @@ function setup() {
   // add image to HUD
   cockpitImage = new Plane({
     x: 0,
-    y: -0.5,
+    y: -0.25,
     z: 0,
     scaleX: 3,
     scaleY: 3,
