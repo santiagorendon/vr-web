@@ -33,7 +33,7 @@ function setup() {
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
 
-  if(distanceTraveled % (renderDistance-renderCushion) === 0){
+  if (distanceTraveled % (renderDistance - renderCushion) === 0) {
     createClouds();
     createToruses();
     createAsteroids();
@@ -78,40 +78,39 @@ function setup() {
 
 function keyPressed() {
   if (keyCode === 32) { // space bar pressed
-  	projectiles.push(new Projectile());
+    projectiles.push(new Projectile());
   }
 }
 
 function drawProjectiles() {
   for (let i = 0; i < projectiles.length; i++) {
-		projectiles[i].move();
-		// get WORLD position for this projectile
-		var projectilePosition = projectiles[i].projectile.getWorldPosition();
-		// remove projectiles thay go to far
-		if (projectilePosition.x > 50 || projectilePosition.x < -50 || projectilePosition.z > distanceTraveled+50 || projectilePosition.z < distanceTraveled-50) {
-			world.remove(projectiles[i].container);
-			projectiles.splice(i, 1);
-			i -= 1;
-			continue;
-		}
+    projectiles[i].move();
+    // get WORLD position for this projectile
+    var projectilePosition = projectiles[i].projectile.getWorldPosition();
+    // remove projectiles thay go to far
+    if (projectilePosition.x > 50 || projectilePosition.x < -50 || projectilePosition.z > distanceTraveled + 50 || projectilePosition.z < distanceTraveled - 50) {
+      world.remove(projectiles[i].container);
+      projectiles.splice(i, 1);
+      i -= 1;
+      continue;
+    }
     // otherwise check for collisions with our targets
-  	for (let j = 0; j < asteroidArray.length; j++) {
-  		// compute distance
+    for (let j = 0; j < asteroidArray.length; j++) {
+      // compute distance
       const sphere = asteroidArray[j].sphere;
-  		const d = dist(projectilePosition.x, projectilePosition.y, projectilePosition.z, sphere.getX(), sphere.getY(), sphere.getZ());
-      console.log("distanceeee", d)
+      const d = dist(projectilePosition.x, projectilePosition.y, projectilePosition.z, sphere.getX(), sphere.getY(), sphere.getZ());
       if (d <= 2) { // asteroid hit
-  			world.remove(sphere);
-  			asteroidArray.splice(j, 1);
-  			break;
-  		}
-  	}
+        world.remove(sphere);
+        asteroidArray.splice(j, 1);
+        break;
+      }
+    }
   }
 }
 
-function removeAsteroids(){
-  for(let i=0; i < asteroidArray.length; i++){
-    if(asteroidArray[i].sphere.getZ()-5 > distanceTraveled){//if plane passed torus
+function removeAsteroids() {
+  for (let i = 0; i < asteroidArray.length; i++) {
+    if (asteroidArray[i].sphere.getZ() - 5 > distanceTraveled) { //if plane passed torus
       world.remove(asteroidArray[i].sphere);
       asteroidArray.splice(i, 1);
       i -= 1;
@@ -120,18 +119,19 @@ function removeAsteroids(){
 }
 
 function createAsteroids() {
-  let startPoint = distanceTraveled-renderCushion;
+  let startPoint = distanceTraveled - renderCushion;
   // start rendering toruses closer if its first set rendered
-  if(distanceTraveled === 0){
+  if (distanceTraveled === 0) {
     startPoint = 0;
   }
   for (let i = 0; i < asteroidDensity; i++) {
-    asteroidArray.push(new Asteroid(startPoint, startPoint-renderDistance));
+    asteroidArray.push(new Asteroid(startPoint, startPoint - renderDistance));
   }
 }
+
 function removeClouds() {
-  for(let i=0; i < cloudArray.length; i++){
-    if(cloudArray[i].cloud.getZ()-5 > distanceTraveled){//if plane passed cloud
+  for (let i = 0; i < cloudArray.length; i++) {
+    if (cloudArray[i].cloud.getZ() - 5 > distanceTraveled) { //if plane passed cloud
       world.remove(cloudArray[i].cloud);
       cloudArray.splice(i, 1);
       i -= 1;
@@ -139,21 +139,21 @@ function removeClouds() {
   }
 }
 
-function createClouds(){
-  let startPoint = distanceTraveled-renderCushion;
-   //start rendering clouds closer if its first set rendered
-  if(distanceTraveled === 0){
+function createClouds() {
+  let startPoint = distanceTraveled - renderCushion;
+  //start rendering clouds closer if its first set rendered
+  if (distanceTraveled === 0) {
     startPoint = 0;
   }
   // create clouds
   for (let i = 0; i < cloudDensity; i++) {
-    cloudArray.push(new Cloud(startPoint, startPoint-renderDistance));
+    cloudArray.push(new Cloud(startPoint, startPoint - renderDistance));
   }
 }
 
-function removeToruses(){
-  for(let i=0; i < torusArray.length; i++){
-    if(torusArray[i].torus.getZ()-5 > distanceTraveled){//if plane passed torus
+function removeToruses() {
+  for (let i = 0; i < torusArray.length; i++) {
+    if (torusArray[i].torus.getZ() - 5 > distanceTraveled) { //if plane passed torus
       world.remove(torusArray[i].torus);
       torusArray.splice(i, 1);
       i -= 1;
@@ -161,14 +161,14 @@ function removeToruses(){
   }
 }
 
-function createToruses(){
-  let startPoint = distanceTraveled-renderCushion;
+function createToruses() {
+  let startPoint = distanceTraveled - renderCushion;
   // start rendering toruses closer if its first set rendered
-  if(distanceTraveled === 0){
+  if (distanceTraveled === 0) {
     startPoint = 0;
   }
   for (let i = 0; i < torusDensity; i++) {
-    torusArray.push(new TorusClass(startPoint, startPoint-renderDistance));
+    torusArray.push(new TorusClass(startPoint, startPoint - renderDistance));
   }
 }
 
@@ -227,40 +227,40 @@ function draw() {
 }
 
 class Projectile {
-	constructor() {
+  constructor() {
     //find out where user is
-		var userPosition = world.getUserPosition();
+    var userPosition = world.getUserPosition();
     //get the direction they are facing
-		var userRotation = world.getUserRotation();
+    var userRotation = world.getUserRotation();
     this.projectileSpeed = 1;
-		this.container = new Container3D({
-			x: userPosition.x,
-			y: userPosition.y,
-			z: userPosition.z-0.8,
-			rotationX: userRotation.x,
-			rotationY: userRotation.y,
-			rotationZ: userRotation.z
-		});
-		world.add(this.container);
-		this.projectile = new Box({
-			x:0,
-			y:0,
-			z:0,
-			width:0.05,
-			height:0.05,
-			depth:0.5,
-			red: 255,
-			blue: 0,
-			green: 0
-		});
-		// add the projectile to the container
-		this.container.addChild(this.projectile);
-	}
+    this.container = new Container3D({
+      x: userPosition.x,
+      y: userPosition.y,
+      z: userPosition.z - 0.8,
+      rotationX: userRotation.x,
+      rotationY: userRotation.y,
+      rotationZ: userRotation.z
+    });
+    world.add(this.container);
+    this.projectile = new Box({
+      x: 0,
+      y: 0,
+      z: 0,
+      width: 0.05,
+      height: 0.05,
+      depth: 0.5,
+      red: 255,
+      blue: 0,
+      green: 0
+    });
+    // add the projectile to the container
+    this.container.addChild(this.projectile);
+  }
   move() {
-		// easy peasy - the projectile just moves along the z-axis by a certain amount
-		// since it's been placed into a container that is already rotated correctly
-		this.projectile.nudge(0,0,-this.projectileSpeed);
-	}
+    // easy peasy - the projectile just moves along the z-axis by a certain amount
+    // since it's been placed into a container that is already rotated correctly
+    this.projectile.nudge(0, 0, -this.projectileSpeed);
+  }
 }
 
 class Cloud {
@@ -289,7 +289,7 @@ class Asteroid {
       rotationX: random(0, 360)
     });
     world.add(this.sphere);
- }
+  }
 }
 class TorusClass {
   constructor(start, end) {
