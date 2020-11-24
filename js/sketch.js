@@ -114,11 +114,11 @@ function setup() {
 
 
 
-// function keyPressed() {
-//   if (keyCode === 32) { // space bar pressed
-//     projectiles.push(new Projectile());
-//   }
-// }
+function keyPressed() {
+  if (keyCode === 32) { // space bar pressed
+    projectiles.push(new Projectile());
+  }
+}
 
 function drawProjectiles() {
   for (let i = 0; i < projectiles.length; i++) {
