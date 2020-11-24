@@ -1,8 +1,6 @@
 /*jshint esversion: 10 */
 var world;
-var rings;
-var textholder;
-var cockpitImage;
+var takeOff = false;
 var elevation;
 var state = 'playing';
 var tarmac, ground;
@@ -19,9 +17,11 @@ var planeSpeed = 0.05;
 var currentRender = 0;
 var renderDistance = 200;
 var renderCushion = 80; //distance to start rendering before reaching render distance
-var cloudDensity = Math.round(0.4*renderDistance);
-var torusDensity = Math.round(0.1*renderDistance);
-var asteroidDensity = Math.round(0.1*renderDistance);
+var cloudDensity = Math.round(0.4 * renderDistance);
+var torusDensity = Math.round(0.1 * renderDistance);
+var asteroidDensity = Math.round(0.1 * renderDistance);
+var scoreLabel;
+var speedLabel;
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -29,10 +29,31 @@ function preload() {
 
 function setup() {
   noCanvas();
-  world = new World('VRScene', 'gaze');
+  world = new World('VRScene');
+  world.camera.cursor.show();
   world.setFlying(true);
   container = new Container3D({});
   container2 = new Container3D({}); // container for tarmac and ground
+
+  scoreLabel = new Plane({
+    x: 0,
+    y: -0.2,
+    z: 0,
+    width: 1,
+    height: 1,
+    transparent: true,
+    opacity: 0
+  });
+
+  speedLabel = new Plane({
+    x: 0,
+    y: -0.3,
+    z: 0,
+    width: 1,
+    height: 1,
+    transparent: true,
+    opacity: 0
+  });
 
   tarmac = new Plane({ // tarmac
     x: 0,
@@ -58,9 +79,9 @@ function setup() {
   world.add(container2);
 
   // add image to HUD
-  cockpitImage = new Plane({
+  let cockpitImage = new Plane({
     x: 0,
-    y: -0.25,
+    y: 0,
     z: 0,
     scaleX: 3,
     scaleY: 3,
@@ -68,7 +89,43 @@ function setup() {
     asset: 'cockpit',
   });
   container.addChild(cockpitImage);
+  container.addChild(scoreLabel);
+  container.addChild(speedLabel);
   world.camera.cursor.addChild(container);
+
+  accelerateButton = new Cylinder({
+    x: 0.2,
+    y: -0.5,
+    z: 0,
+    red: 0,
+    green: 255,
+    blue: 0,
+    radius: 0.05,
+    height: 0.1,
+    rotationX: 45,
+    clickFunction: function(me) {
+      planeSpeed += 0.1;
+    }
+  });
+
+  deaccelerateButton = new Cylinder({
+    x: -0.2,
+    y: -0.5,
+    z: 0,
+    red: 255,
+    green: 0,
+    blue: 0,
+    radius: 0.05,
+    height: 0.1,
+    rotationX: 45,
+    clickFunction: function(me) {
+      if (planeSpeed >= 0.1) {
+        planeSpeed -= 0.1;
+      }
+    }
+  });
+  container.addChild(accelerateButton);
+  container.addChild(deaccelerateButton);
 }
 
 function keyPressed() {
@@ -168,7 +225,7 @@ function createToruses() {
 }
 
 function draw() {
-  if (distanceTraveled < -currentRender+renderCushion) {
+  if (distanceTraveled < -currentRender + renderCushion) {
     currentRender += renderDistance;
     createClouds();
     createToruses();
@@ -186,14 +243,15 @@ function draw() {
 
   if (elevation <= 0) { // if they go too low, game is over
     state = 'crash';
-  } else if (elevation >= 2) { // increase speed once taken off
+  } else if (elevation >= 2 && !takeOff) { // increase speed once taken off
     planeSpeed = 0.15;
+    takeOff = true;
   }
 
   if (state == 'crash') { // create a blank game over field
     let plane3 = new Plane({
       x: 0,
-      y: -0.5,
+      y: 0,
       z: 0,
       scaleX: 3,
       scaleY: 3
@@ -203,15 +261,17 @@ function draw() {
     container2.remove(tarmac);
 
     // remove score
-    cockpitImage.tag.setAttribute('text',
-      'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+    scoreLabel.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+    speedLabel.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
+
     // tell user it's game over
     plane3.tag.setAttribute('text',
       'value: ' + ('game over') + '; color: rgb(0,0,0); align: center;');
   } else { // when plane is not crashed
     world.moveUserForward(planeSpeed); // move
     distanceTraveled = world.camera.getZ();
-    cockpitImage.tag.setAttribute('text', 'value: ' + (score) + '; color: rgb(0,0,0); align: center;');
+    scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
+    speedLabel.tag.setAttribute('text', 'value: ' + (Math.round(planeSpeed * 10000)) + ' mph ; color: rgb(255,255,255); align: center;');
 
     // if user gets a point
     for (let i = 0; i < torusArray.length; i++) {
@@ -279,6 +339,7 @@ class Cloud {
     world.add(this.cloud);
   }
 }
+
 class Asteroid {
   constructor(start, end) {
     this.sphere = new Sphere({
@@ -292,6 +353,7 @@ class Asteroid {
     world.add(this.sphere);
   }
 }
+
 class TorusClass {
   constructor(start, end) {
     this.torus = new Torus({
