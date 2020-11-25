@@ -14,20 +14,30 @@ var user;
 var sound;
 var distanceTraveled = 0;
 var planeSpeed = 0.05;
+var maxPlaneSpeed = 0.65;
 var usingSpeedControls = false;
 var scoreLabel;
 var speedLabel;
 /* graphic settings */
-var currentRender = 0;
 var renderDistance = 200;
+var currentRender = 0;
+var skyRenderDistance = 350;
+var skyCurrentRender = skyRenderDistance;
+var groundRenderDistance = 1400;
+var groundCurrentRender = groundRenderDistance;
 var renderCushion = 80; //distance to start rendering before reaching render distance
 var cloudDensity = Math.round(0.3 * renderDistance);
 var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
-
+// to increase performance:
+// increase skyrender distance
+// increase ground render distance
+// decrease renderDistance
+// decrease density of objects
 
 function preload() {
-  sound = loadSound('point.mp3');
+  pointSound = loadSound('sounds/point.mp3');
+  engineSound = loadSound('sounds/engine.mp3');
 }
 
 function setup() {
@@ -70,6 +80,9 @@ function setup() {
   });
 
   ground = new Plane({ // regular ground
+    x: 0,
+    y: 0,
+    z: 0,
     width: 3000,
     height: 3000,
     rotationX: -90,
@@ -114,7 +127,10 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      planeSpeed += 0.1;
+      if(planeSpeed < maxPlaneSpeed){
+        planeSpeed += 0.1;
+        engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+      }
     }
   });
 
@@ -135,9 +151,10 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      if (planeSpeed >= 0.1) {
+      if (planeSpeed >= 0.15) {
         planeSpeed -= 0.1;
       }
+      engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
     }
   });
   container.addChild(accelerateButton);
@@ -146,6 +163,8 @@ function setup() {
   // create our gravity sensor (see class below)
   // this object detects what is below the user
   sensor = new Sensor();
+  engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+  engineSound.loop();
 }
 
 function mousePressed() {
@@ -250,13 +269,28 @@ function createToruses() {
   }
 }
 
-function draw() {
+function renderNearbyObjects(){
+  // render nearby asteroids/toruses/clouds every renderdistance traveled
   if (distanceTraveled < -currentRender + renderCushion) {
     currentRender += renderDistance;
     createClouds();
     createToruses();
     createAsteroids();
   }
+  // move sky once user travels far enough
+  if(distanceTraveled < -skyCurrentRender){
+    skyCurrentRender += skyRenderDistance;
+    let sky = document.getElementById("theSky");
+    sky.setAttribute("position", `0 0 ${distanceTraveled}`);
+  }
+  // move ground once user travels far enough
+  if(distanceTraveled < -groundCurrentRender){
+    groundCurrentRender += groundRenderDistance;
+    ground.nudge(0, 0, distanceTraveled);
+  }
+}
+function draw() {
+  renderNearbyObjects();
   // dont render objects that the plane no longer sees
   removeClouds();
   removeToruses();
@@ -279,10 +313,12 @@ function draw() {
   }
   if (elevation >= 2 && !takeOff) { // increase speed once taken off
     planeSpeed = 0.15;
+    engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
     takeOff = true;
   }
 
   if (state == 'crash') { // create a blank game over field
+    engineSound.stop();
     let plane3 = new Plane({
       x: 0,
       y: 0,
@@ -310,8 +346,8 @@ function draw() {
     // if user gets a point
     for (let i = 0; i < torusArray.length; i++) {
       if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
-        if (!sound.isPlaying()) {
-          sound.play();
+        if (!pointSound.isPlaying()) {
+          pointSound.play();
         }
         score += 1;
         world.remove(torusArray[i].torus);
@@ -394,7 +430,7 @@ class TorusClass {
   constructor(start, end) {
     this.torus = new Torus({
       x: random(-10, 10),
-      y: random(2, 30),
+      y: random(3, 30),
       z: random(start, end),
       red: 255,
       green: 215,
