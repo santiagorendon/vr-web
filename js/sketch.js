@@ -314,6 +314,9 @@ function draw() {
           sound.play();
         }
         score += 1;
+        world.remove(torusArray[i].torus);
+        torusArray.splice(i, 1);
+        i -= 1;
       }
     }
   }
