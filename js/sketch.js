@@ -14,6 +14,9 @@ var user;
 var sound;
 var distanceTraveled = 0;
 var planeSpeed = 0.05;
+var usingSpeedControls = false;
+var scoreLabel;
+var speedLabel;
 /* graphic settings */
 var currentRender = 0;
 var renderDistance = 200;
@@ -21,8 +24,7 @@ var renderCushion = 80; //distance to start rendering before reaching render dis
 var cloudDensity = Math.round(0.3 * renderDistance);
 var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
-var scoreLabel;
-var speedLabel;
+
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -105,7 +107,13 @@ function setup() {
     radius: 0.05,
     height: 0.1,
     rotationX: 45,
-    clickFunction: function(me) {
+    enterFunction: function(btn) {
+      usingSpeedControls = true;
+    },
+    leaveFunction: function(btn) {
+      usingSpeedControls = false;
+    },
+    clickFunction: function(btn) {
       planeSpeed += 0.1;
     }
   });
@@ -120,7 +128,13 @@ function setup() {
     radius: 0.05,
     height: 0.1,
     rotationX: 45,
-    clickFunction: function(me) {
+    enterFunction: function(btn) {
+      usingSpeedControls = true;
+    },
+    leaveFunction: function(btn) {
+      usingSpeedControls = false;
+    },
+    clickFunction: function(btn) {
       if (planeSpeed >= 0.1) {
         planeSpeed -= 0.1;
       }
@@ -134,6 +148,12 @@ function setup() {
   sensor = new Sensor();
 }
 
+function mousePressed(){
+  console.log(usingSpeedControls)
+  if(!usingSpeedControls){ // do not shoot when user presses on speed control
+    projectiles.push(new Projectile());
+  }
+}
 function keyPressed() {
   if (keyCode === 32) { // space bar pressed
     projectiles.push(new Projectile());
@@ -379,9 +399,6 @@ class TorusClass {
       green: 215,
       blue: 0,
       radius: 2.5,
-      clickFunction: function(torusInstance) {
-        torusInstance.setColor(0, 255, 0);
-      }
     });
     this.torus.tag.object3D.userData.torus = true;
     world.add(this.torus);
@@ -421,7 +438,6 @@ class Sensor {
           i--;
         }
       }
-
       if (this.intersectsFront.length > 0) {
         return this.intersectsFront[0];
       }
