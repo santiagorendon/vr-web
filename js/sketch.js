@@ -148,12 +148,12 @@ function setup() {
   sensor = new Sensor();
 }
 
-function mousePressed(){
-  console.log(usingSpeedControls)
-  if(!usingSpeedControls){ // do not shoot when user presses on speed control
+function mousePressed() {
+  if (!usingSpeedControls) { // do not shoot when user presses on speed control
     projectiles.push(new Projectile());
   }
 }
+
 function keyPressed() {
   if (keyCode === 32) { // space bar pressed
     projectiles.push(new Projectile());
@@ -270,7 +270,7 @@ function draw() {
   let whatsBelow = sensor.getEntityBelowUser();
   let objectAhead = sensor.getEntityInFrontOfUser();
   //if we hit an object below us
-  if(whatsBelow && whatsBelow.distance < 0.98){
+  if (whatsBelow && whatsBelow.distance < 0.98) {
     state = 'crash';
   }
   // if we collide with asteroid or torus dont move
