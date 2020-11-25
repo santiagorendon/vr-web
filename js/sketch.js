@@ -22,7 +22,7 @@ var currentRender = 0;
 var renderDistance = 200;
 var renderCushion = 80; //distance to start rendering before reaching render distance
 var cloudDensity = Math.round(0.3 * renderDistance);
-var torusDensity = Math.round(0.01 * renderDistance);
+var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
 
 
