@@ -24,7 +24,7 @@ var renderCushion = 80; //distance to start rendering before reaching render dis
 var cloudDensity = Math.round(0.3 * renderDistance);
 var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
-
+var plane3
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -250,6 +250,21 @@ function createToruses() {
   }
 }
 
+function restartGame(){
+  torusArray = []
+  asteroidArray = []
+  cloudArray = []
+  world.setUserPosition(0, 1.6, 0)
+  score = 0
+  planeSpeed = 0.05
+  removeAsteroids()
+  removeClouds()
+  removeToruses()
+  container.removeChild(plane3)
+  container2.add(ground);
+  container2.add(tarmac);
+}
+
 function draw() {
   if (distanceTraveled < -currentRender + renderCushion) {
     currentRender += renderDistance;
@@ -283,12 +298,15 @@ function draw() {
   }
 
   if (state == 'crash') { // create a blank game over field
-    let plane3 = new Plane({
+  plane3 = new Plane({
       x: 0,
       y: 0,
-      z: 0,
+      z: 0.1,
       scaleX: 3,
-      scaleY: 3
+      scaleY: 3,
+      clickFunction: function(me){
+        restartGame()
+      }
     });
     container.addChild(plane3);
     container2.remove(ground);
@@ -300,8 +318,13 @@ function draw() {
 
     // tell user it's game over
     plane3.tag.setAttribute('text',
-      'value: ' + ('game over') + '; color: rgb(0,0,0); align: center;');
-  } else { // when plane is not crashed
+      'value: ' + ('click to play again') + '; color: rgb(0,0,0); align: center;');
+
+    state = "notCrash"
+  }
+
+
+  else { // when plane is not crashed
     world.moveUserForward(planeSpeed); // move
     distanceTraveled = world.camera.getZ();
     scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
