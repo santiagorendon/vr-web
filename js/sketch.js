@@ -1,5 +1,6 @@
 /*jshint esversion: 10 */
 var world;
+var sensor; // will find objects in front/below the user
 var takeOff = false;
 var elevation;
 var state = 'playing';
@@ -13,15 +14,17 @@ var user;
 var sound;
 var distanceTraveled = 0;
 var planeSpeed = 0.05;
+var usingSpeedControls = false;
+var scoreLabel;
+var speedLabel;
 /* graphic settings */
 var currentRender = 0;
 var renderDistance = 200;
 var renderCushion = 80; //distance to start rendering before reaching render distance
-var cloudDensity = Math.round(0.4 * renderDistance);
+var cloudDensity = Math.round(0.3 * renderDistance);
 var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
-var scoreLabel;
-var speedLabel;
+
 
 function preload() {
   sound = loadSound('point.mp3');
@@ -75,6 +78,7 @@ function setup() {
     repeatY: 500,
   });
   container2.add(tarmac);
+  ground.tag.object3D.userData.ground = true;
   container2.add(ground);
   world.add(container2);
 
@@ -103,7 +107,13 @@ function setup() {
     radius: 0.05,
     height: 0.1,
     rotationX: 45,
-    clickFunction: function(me) {
+    enterFunction: function(btn) {
+      usingSpeedControls = true;
+    },
+    leaveFunction: function(btn) {
+      usingSpeedControls = false;
+    },
+    clickFunction: function(btn) {
       planeSpeed += 0.1;
     }
   });
@@ -118,7 +128,13 @@ function setup() {
     radius: 0.05,
     height: 0.1,
     rotationX: 45,
-    clickFunction: function(me) {
+    enterFunction: function(btn) {
+      usingSpeedControls = true;
+    },
+    leaveFunction: function(btn) {
+      usingSpeedControls = false;
+    },
+    clickFunction: function(btn) {
       if (planeSpeed >= 0.1) {
         planeSpeed -= 0.1;
       }
@@ -126,6 +142,16 @@ function setup() {
   });
   container.addChild(accelerateButton);
   container.addChild(deaccelerateButton);
+
+  // create our gravity sensor (see class below)
+  // this object detects what is below the user
+  sensor = new Sensor();
+}
+
+function mousePressed() {
+  if (!usingSpeedControls) { // do not shoot when user presses on speed control
+    projectiles.push(new Projectile());
+  }
 }
 
 function keyPressed() {
@@ -240,10 +266,18 @@ function draw() {
   user = world.getUserPosition(); // user's position
   elevation = world.getUserPosition().y; // user's y
   elevation = Math.round(elevation); // round it
-
-  if (elevation <= 0) { // if they go too low, game is over
+  // see what's below / in front of the user
+  let whatsBelow = sensor.getEntityBelowUser();
+  let objectAhead = sensor.getEntityInFrontOfUser();
+  //if we hit an object below us
+  if (whatsBelow && whatsBelow.distance < 0.98) {
     state = 'crash';
-  } else if (elevation >= 2 && !takeOff) { // increase speed once taken off
+  }
+  // if we collide with asteroid or torus dont move
+  if (objectAhead && objectAhead.distance < 1.4 && (objectAhead.object.el.object3D.userData.asteroid || objectAhead.object.el.object3D.userData.torus)) {
+    state = 'crash';
+  }
+  if (elevation >= 2 && !takeOff) { // increase speed once taken off
     planeSpeed = 0.15;
     takeOff = true;
   }
@@ -275,7 +309,7 @@ function draw() {
 
     // if user gets a point
     for (let i = 0; i < torusArray.length; i++) {
-      if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= 1) {
+      if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
         if (!sound.isPlaying()) {
           sound.play();
         }
@@ -350,6 +384,7 @@ class Asteroid {
       radius: 1.5,
       rotationX: random(0, 360)
     });
+    this.sphere.tag.object3D.userData.asteroid = true;
     world.add(this.sphere);
   }
 }
@@ -360,14 +395,77 @@ class TorusClass {
       x: random(-10, 10),
       y: random(2, 30),
       z: random(start, end),
-      red: random(255),
-      green: random(255),
-      blue: random(255),
-      radius: 1.5,
-      clickFunction: function(torusInstance) {
-        torusInstance.setColor(0, 255, 0);
-      }
+      red: 255,
+      green: 215,
+      blue: 0,
+      radius: 2.5,
     });
+    this.torus.tag.object3D.userData.torus = true;
     world.add(this.torus);
+  }
+}
+
+class Sensor {
+
+  constructor() {
+    // raycaster - think of this like a "beam" that will fire out of the
+    // bottom of the user's position to figure out what is below their avatar
+    this.rayCaster = new THREE.Raycaster();
+    this.userPosition = new THREE.Vector3(0, 0, 0);
+    this.downVector = new THREE.Vector3(0, -1, 0);
+    this.intersects = [];
+
+    this.rayCasterFront = new THREE.Raycaster();
+    this.cursorPosition = new THREE.Vector2(0, 0);
+    this.intersectsFront = [];
+  }
+
+  getEntityInFrontOfUser() {
+    // update the user's current position
+    var cp = world.getUserPosition();
+    this.userPosition.x = cp.x;
+    this.userPosition.y = cp.y;
+    this.userPosition.z = cp.z;
+
+    if (world.camera.holder.object3D.children.length >= 2) {
+      this.rayCasterFront.setFromCamera(this.cursorPosition, world.camera.holder.object3D.children[1]);
+      this.intersectsFront = this.rayCasterFront.intersectObjects(world.threeSceneReference.children, true);
+
+      // determine which "solid" items are in front of the user
+      for (var i = 0; i < this.intersectsFront.length; i++) {
+        if (!(this.intersectsFront[i].object.el.object3D.userData.asteroid || this.intersectsFront[i].object.el.object3D.userData.torus || this.intersectsFront[i].object.el.object3D.userData.ground)) {
+          this.intersectsFront.splice(i, 1);
+          i--;
+        }
+      }
+      if (this.intersectsFront.length > 0) {
+        return this.intersectsFront[0];
+      }
+      return false;
+    }
+  }
+
+  getEntityBelowUser() {
+    // update the user's current position
+    var cp = world.getUserPosition();
+    this.userPosition.x = cp.x;
+    this.userPosition.y = cp.y;
+    this.userPosition.z = cp.z;
+
+    this.rayCaster.set(this.userPosition, this.downVector);
+    this.intersects = this.rayCaster.intersectObjects(world.threeSceneReference.children, true);
+
+    // determine which "solid" or "stairs" items are below
+    for (var i = 0; i < this.intersects.length; i++) {
+      if (!(this.intersects[i].object.el.object3D.userData.asteroid || this.intersects[i].object.el.object3D.userData.torus || this.intersects[i].object.el.object3D.userData.ground)) {
+        this.intersects.splice(i, 1);
+        i--;
+      }
+    }
+
+    if (this.intersects.length > 0) {
+      return this.intersects[0];
+    }
+    return false;
   }
 }
