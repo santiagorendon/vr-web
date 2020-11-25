@@ -314,8 +314,6 @@ function draw() {
           sound.play();
         }
         score += 1;
-        torusArray.splice(i, 1);
-        i -= 1;
       }
     }
   }
