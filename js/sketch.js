@@ -182,6 +182,7 @@ function restartGame() {
   state = "playing";
   world.setUserPosition(0, 3, 0);
   // reset variables
+  score = 0;
   firstToruses = true;
   firstClouds = true;
   firstAsteroids = true;
@@ -422,16 +423,20 @@ function collisionDetection() {
   }
 }
 
+function tryToTakeOff(){
+  if (elevation >= 2 && !takeOff) { // increase speed once taken off
+    planeSpeed = 0.15;
+    engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+    takeOff = true;
+  }
+}
+
 function draw() {
   if (state === "playing") {
-    if (elevation >= 2 && !takeOff) { // increase speed once taken off
-      planeSpeed = 0.15;
-      engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
-      takeOff = true;
-    }
-
-    collisionDetection();
     shotDelay += 1;
+    // increase speed if taking off
+    tryToTakeOff();
+    collisionDetection();
     renderNearbyObjects();
     // dont render objects that the plane no longer sees
     removeClouds();
@@ -441,18 +446,21 @@ function draw() {
     drawScoreBoard();
     world.moveUserForward(planeSpeed); // move
     distanceTraveled = world.camera.getZ();
+    isUserScoring();
+  }
+}
 
-    // if user gets a point
-    for (let i = 0; i < torusArray.length; i++) {
-      if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
-        if (!pointSound.isPlaying()) {
-          pointSound.play();
-        }
-        score += 1;
-        world.remove(torusArray[i].torus);
-        torusArray.splice(i, 1);
-        i -= 1;
+function isUserScoring(){
+  // if user gets a point
+  for (let i = 0; i < torusArray.length; i++) {
+    if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
+      if (!pointSound.isPlaying()) {
+        pointSound.play();
       }
+      score += 1;
+      world.remove(torusArray[i].torus);
+      torusArray.splice(i, 1);
+      i -= 1;
     }
   }
 }
