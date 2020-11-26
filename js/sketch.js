@@ -181,6 +181,7 @@ function setup() {
 function restartGame() {
   state = "playing";
   world.setUserPosition(0, 3, 0);
+  distanceTraveled = 0;
   // reset variables
   score = 0;
   firstToruses = true;
