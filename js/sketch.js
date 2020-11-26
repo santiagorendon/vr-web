@@ -48,6 +48,20 @@ function preload() {
   crashSound = loadSound('sounds/crash.mp3');
 }
 
+function increaseSpeed() {
+  if (planeSpeed < maxPlaneSpeed) {
+    planeSpeed += 0.1;
+    engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+  }
+}
+
+function decreaseSpeed() {
+  if (planeSpeed >= 0.15) {
+    planeSpeed -= 0.1;
+  }
+  engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+}
+
 function setup() {
   noCanvas();
   world = new World('VRScene');
@@ -114,10 +128,6 @@ function setup() {
     transparent: true,
     asset: 'cockpit',
   });
-  container.addChild(cockpitImage);
-  container.addChild(scoreLabel);
-  container.addChild(speedLabel);
-  world.camera.cursor.addChild(container);
 
   accelerateButton = new Cylinder({
     x: 0.2,
@@ -136,10 +146,7 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      if (planeSpeed < maxPlaneSpeed) {
-        planeSpeed += 0.1;
-        engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
-      }
+      increaseSpeed();
     }
   });
 
@@ -160,14 +167,15 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      if (planeSpeed >= 0.15) {
-        planeSpeed -= 0.1;
-      }
-      engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+      decreaseSpeed();
     }
   });
   container.addChild(accelerateButton);
   container.addChild(deaccelerateButton);
+  container.addChild(cockpitImage);
+  container.addChild(scoreLabel);
+  container.addChild(speedLabel);
+  world.camera.cursor.addChild(container);
 
   // create our gravity sensor (see class below)
   // this object detects what is below the user
@@ -237,7 +245,11 @@ function mousePressed() {
 }
 
 function keyPressed() {
-  if (keyCode === 32) { // space bar pressed
+  if (keyCode === 87) { // W pressed
+    increaseSpeed();
+  } else if (keyCode === 83) { // S pressed
+    decreaseSpeed();
+  } else if (keyCode === 32) { // space bar pressed
     projectiles.push(new Projectile());
     shotSound.play();
   }
@@ -424,7 +436,7 @@ function collisionDetection() {
   }
 }
 
-function tryToTakeOff(){
+function tryToTakeOff() {
   if (elevation >= 2 && !takeOff) { // increase speed once taken off
     planeSpeed = 0.15;
     engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
@@ -451,7 +463,7 @@ function draw() {
   }
 }
 
-function isUserScoring(){
+function isUserScoring() {
   // if user gets a point
   for (let i = 0; i < torusArray.length; i++) {
     if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
