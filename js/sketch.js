@@ -225,10 +225,9 @@ function restartGame() {
 }
 
 function mousePressed() {
-  if(state === "crash"){
+  if (state === "crash") {
     restartGame();
-  }
-  else if (!usingSpeedControls && shotDelay > 14) { // do not shoot when user presses on speed control
+  } else if (!usingSpeedControls && shotDelay > 14) { // do not shoot when user presses on speed control
     projectiles.push(new Projectile());
     shotSound.play();
     shotDelay = 0;
@@ -360,7 +359,7 @@ function drawScoreBoard() {
   speedLabel.tag.setAttribute('text', 'value: ' + (Math.round(planeSpeed * 10000)) + ' mph ; color: rgb(255,255,255); align: center;');
 }
 
-function deleteGameObjects(){
+function deleteGameObjects() {
   // remove all clouds
   for (let i = 0; i < cloudArray.length; i++) {
     world.remove(cloudArray[i].cloud);
