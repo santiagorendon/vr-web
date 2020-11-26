@@ -181,6 +181,8 @@ function setup() {
 function restartGame() {
   state = "playing";
   world.setUserPosition(0, 3, 0);
+  distanceTraveled = 0;
+  alert("reset", distanceTraveled)
   // reset variables
   score = 0;
   firstToruses = true;
@@ -326,9 +328,12 @@ function removeToruses() {
 function createToruses() {
   let startPoint = distanceTraveled - renderCushion;
   // start rendering toruses closer if its first set rendered
+  console.log(firstToruses)
   if (firstToruses) {
+    alert(firstToruses)
     startPoint = 0;
     firstToruses = false;
+    alert("yuh"+startPoint+" "+distanceTraveled)
   }
   for (let i = 0; i < torusDensity; i++) {
     torusArray.push(new TorusClass(startPoint, startPoint - renderDistance));
