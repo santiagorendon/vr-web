@@ -400,7 +400,7 @@ function loadGameOver() {
   world.remove(container2);
   // tell user it's game over
   blankPlane.tag.setAttribute('text',
-    'value: ' + ('game over') + '; color: rgb(0,0,0); align: center;');
+    'value: ' + ('Click to Restart') + '; color: rgb(0,0,0); align: center;');
 }
 
 function collisionDetection() {
