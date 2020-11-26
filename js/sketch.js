@@ -9,25 +9,43 @@ var torusArray = [];
 var asteroidArray = [];
 var cloudArray = [];
 var projectiles = [];
+var shotDelay = 3;
 var score = 0;
 var user;
 var sound;
 var distanceTraveled = 0;
 var planeSpeed = 0.05;
+var maxPlaneSpeed = 0.65;
 var usingSpeedControls = false;
 var scoreLabel;
 var speedLabel;
+var blankPlane;
+// by default render first objects in front of player
+var firstToruses = true;
+var firstClouds = true;
+var firstAsteroids = true;
 /* graphic settings */
-var currentRender = 0;
 var renderDistance = 200;
+var currentRender = 0;
+var skyRenderDistance = 350;
+var skyCurrentRender = skyRenderDistance;
+var groundRenderDistance = 1400;
+var groundCurrentRender = groundRenderDistance;
 var renderCushion = 80; //distance to start rendering before reaching render distance
 var cloudDensity = Math.round(0.3 * renderDistance);
 var torusDensity = Math.round(0.1 * renderDistance);
 var asteroidDensity = Math.round(0.1 * renderDistance);
-
+// to increase performance:
+// increase skyrender distance
+// increase ground render distance
+// decrease renderDistance
+// decrease density of objects
 
 function preload() {
-  sound = loadSound('point.mp3');
+  pointSound = loadSound('sounds/point.mp3');
+  engineSound = loadSound('sounds/engine.mp3');
+  shotSound = loadSound('sounds/shot.wav');
+  crashSound = loadSound('sounds/crash.mp3');
 }
 
 function setup() {
@@ -70,10 +88,14 @@ function setup() {
   });
 
   ground = new Plane({ // regular ground
+    x: 0,
+    y: 0,
+    z: 0,
     width: 3000,
     height: 3000,
     rotationX: -90,
     asset: "ground",
+    side: "double",
     repeatX: 500,
     repeatY: 500,
   });
@@ -114,7 +136,10 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      planeSpeed += 0.1;
+      if (planeSpeed < maxPlaneSpeed) {
+        planeSpeed += 0.1;
+        engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+      }
     }
   });
 
@@ -135,9 +160,10 @@ function setup() {
       usingSpeedControls = false;
     },
     clickFunction: function(btn) {
-      if (planeSpeed >= 0.1) {
+      if (planeSpeed >= 0.15) {
         planeSpeed -= 0.1;
       }
+      engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
     }
   });
   container.addChild(accelerateButton);
@@ -146,17 +172,73 @@ function setup() {
   // create our gravity sensor (see class below)
   // this object detects what is below the user
   sensor = new Sensor();
+  engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
+  shotSound.setVolume(0.05);
+  crashSound.setVolume(0.18);
+  engineSound.loop();
+}
+
+function restartGame() {
+  state = "playing";
+  world.setUserPosition(0, 3, 0);
+  // reset variables
+  score = 0;
+  firstToruses = true;
+  firstClouds = true;
+  firstAsteroids = true;
+  currentRender = 0;
+  skyCurrentRender = skyRenderDistance;
+  groundCurrentRender = groundRenderDistance;
+  planeSpeed = 0.15;
+  // reset sky
+  document.getElementById("theSky").setAttribute("position", `0 0 ${distanceTraveled}`);
+
+  container.remove(blankPlane);
+
+  tarmac = new Plane({ // tarmac
+    x: 0,
+    y: 0.1,
+    width: 10,
+    height: 100,
+    asset: 'pavement',
+    repeatX: 10,
+    repeatY: 100,
+    rotationX: -90
+  });
+
+  ground = new Plane({ // regular ground
+    x: 0,
+    y: 0,
+    z: 0,
+    width: 3000,
+    height: 3000,
+    rotationX: -90,
+    asset: "ground",
+    side: "double",
+    repeatX: 500,
+    repeatY: 500,
+  });
+
+  container2.add(tarmac);
+  ground.tag.object3D.userData.ground = true;
+  container2.add(ground);
+  world.add(container2); // add ground and tarmac back
 }
 
 function mousePressed() {
-  if (!usingSpeedControls) { // do not shoot when user presses on speed control
+  if (state === "crash") {
+    restartGame();
+  } else if (!usingSpeedControls && shotDelay > 14) { // do not shoot when user presses on speed control
     projectiles.push(new Projectile());
+    shotSound.play();
+    shotDelay = 0;
   }
 }
 
 function keyPressed() {
   if (keyCode === 32) { // space bar pressed
     projectiles.push(new Projectile());
+    shotSound.play();
   }
 }
 
@@ -199,8 +281,9 @@ function removeAsteroids() {
 function createAsteroids() {
   let startPoint = distanceTraveled - renderCushion;
   // start rendering toruses closer if its first set rendered
-  if (distanceTraveled === 0) {
+  if (firstAsteroids) {
     startPoint = 0;
+    firstAsteroids = false;
   }
   for (let i = 0; i < asteroidDensity; i++) {
     asteroidArray.push(new Asteroid(startPoint, startPoint - renderDistance));
@@ -218,10 +301,11 @@ function removeClouds() {
 }
 
 function createClouds() {
-  let startPoint = -distanceTraveled - renderCushion;
+  let startPoint = distanceTraveled - renderCushion;
   //start rendering clouds closer if its first set rendered
-  if (distanceTraveled === 0) {
+  if (firstClouds) {
     startPoint = 0;
+    firstClouds = false;
   }
   // create clouds
   for (let i = 0; i < cloudDensity; i++) {
@@ -242,27 +326,85 @@ function removeToruses() {
 function createToruses() {
   let startPoint = distanceTraveled - renderCushion;
   // start rendering toruses closer if its first set rendered
-  if (distanceTraveled === 0) {
+  if (firstToruses) {
     startPoint = 0;
+    firstToruses = false;
   }
   for (let i = 0; i < torusDensity; i++) {
     torusArray.push(new TorusClass(startPoint, startPoint - renderDistance));
   }
 }
 
-function draw() {
+function renderNearbyObjects() {
+  // render nearby asteroids/toruses/clouds every renderdistance traveled
   if (distanceTraveled < -currentRender + renderCushion) {
     currentRender += renderDistance;
     createClouds();
     createToruses();
     createAsteroids();
   }
-  // dont render objects that the plane no longer sees
-  removeClouds();
-  removeToruses();
-  removeAsteroids();
-  drawProjectiles();
+  // move sky once user travels far enough
+  if (distanceTraveled < -skyCurrentRender) {
+    skyCurrentRender += skyRenderDistance;
+    document.getElementById("theSky").setAttribute("position", `0 0 ${distanceTraveled}`);
+  }
+  // move ground once user travels far enough
+  if (distanceTraveled < -groundCurrentRender) {
+    groundCurrentRender += groundRenderDistance;
+    ground.nudge(0, 0, distanceTraveled);
+  }
+}
 
+function drawScoreBoard() {
+  scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
+  speedLabel.tag.setAttribute('text', 'value: ' + (Math.round(planeSpeed * 10000)) + ' mph ; color: rgb(255,255,255); align: center;');
+}
+
+function deleteGameObjects() {
+  // remove all clouds
+  for (let i = 0; i < cloudArray.length; i++) {
+    world.remove(cloudArray[i].cloud);
+    cloudArray.splice(i, 1);
+    i -= 1;
+  }
+  // remove all asteroids
+  for (let i = 0; i < asteroidArray.length; i++) {
+    world.remove(asteroidArray[i].sphere);
+    asteroidArray.splice(i, 1);
+    i -= 1;
+  }
+  // remove all toruses
+  for (let i = 0; i < torusArray.length; i++) {
+    world.remove(torusArray[i].torus);
+    torusArray.splice(i, 1);
+    i -= 1;
+  }
+  for (let i = 0; i < projectiles.length; i++) {
+    world.remove(projectiles[i].container);
+    projectiles.splice(i, 1);
+    i -= 1;
+  }
+}
+
+function loadGameOver() {
+  deleteGameObjects();
+  crashSound.play();
+  engineSound.stop();
+  blankPlane = new Plane({
+    x: 0,
+    y: 0,
+    z: 0,
+    scaleX: 3,
+    scaleY: 3
+  });
+  container.addChild(blankPlane);
+  world.remove(container2);
+  // tell user it's game over
+  blankPlane.tag.setAttribute('text',
+    'value: ' + ('Click to Restart') + '; color: rgb(0,0,0); align: center;');
+}
+
+function collisionDetection() {
   user = world.getUserPosition(); // user's position
   elevation = world.getUserPosition().y; // user's y
   elevation = Math.round(elevation); // round it
@@ -271,53 +413,54 @@ function draw() {
   let objectAhead = sensor.getEntityInFrontOfUser();
   //if we hit an object below us
   if (whatsBelow && whatsBelow.distance < 0.98) {
+    loadGameOver();
     state = 'crash';
   }
   // if we collide with asteroid or torus dont move
   if (objectAhead && objectAhead.distance < 1.4 && (objectAhead.object.el.object3D.userData.asteroid || objectAhead.object.el.object3D.userData.torus)) {
+    loadGameOver();
     state = 'crash';
   }
+}
+
+function tryToTakeOff(){
   if (elevation >= 2 && !takeOff) { // increase speed once taken off
     planeSpeed = 0.15;
+    engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
     takeOff = true;
   }
+}
 
-  if (state == 'crash') { // create a blank game over field
-    let plane3 = new Plane({
-      x: 0,
-      y: 0,
-      z: 0,
-      scaleX: 3,
-      scaleY: 3
-    });
-    container.addChild(plane3);
-    container2.remove(ground);
-    container2.remove(tarmac);
-
-    // remove score
-    scoreLabel.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
-    speedLabel.tag.setAttribute('text', 'value: ' + ' ' + '; color: rgb(0,0,0); align: center;');
-
-    // tell user it's game over
-    plane3.tag.setAttribute('text',
-      'value: ' + ('game over') + '; color: rgb(0,0,0); align: center;');
-  } else { // when plane is not crashed
+function draw() {
+  if (state === "playing") {
+    shotDelay += 1;
+    // increase speed if taking off
+    tryToTakeOff();
+    collisionDetection();
+    renderNearbyObjects();
+    // dont render objects that the plane no longer sees
+    removeClouds();
+    removeToruses();
+    removeAsteroids();
+    drawProjectiles();
+    drawScoreBoard();
     world.moveUserForward(planeSpeed); // move
     distanceTraveled = world.camera.getZ();
-    scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
-    speedLabel.tag.setAttribute('text', 'value: ' + (Math.round(planeSpeed * 10000)) + ' mph ; color: rgb(255,255,255); align: center;');
+    isUserScoring();
+  }
+}
 
-    // if user gets a point
-    for (let i = 0; i < torusArray.length; i++) {
-      if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
-        if (!sound.isPlaying()) {
-          sound.play();
-        }
-        score += 1;
-        world.remove(torusArray[i].torus);
-        torusArray.splice(i, 1);
-        i -= 1;
+function isUserScoring(){
+  // if user gets a point
+  for (let i = 0; i < torusArray.length; i++) {
+    if (dist(torusArray[i].torus.x, torusArray[i].torus.y, torusArray[i].torus.z, user.x, user.y, user.z) <= torusArray[i].torus.radius) {
+      if (!pointSound.isPlaying()) {
+        pointSound.play();
       }
+      score += 1;
+      world.remove(torusArray[i].torus);
+      torusArray.splice(i, 1);
+      i -= 1;
     }
   }
 }
@@ -394,7 +537,7 @@ class TorusClass {
   constructor(start, end) {
     this.torus = new Torus({
       x: random(-10, 10),
-      y: random(2, 30),
+      y: random(3, 30),
       z: random(start, end),
       red: 255,
       green: 215,
@@ -463,7 +606,6 @@ class Sensor {
         i--;
       }
     }
-
     if (this.intersects.length > 0) {
       return this.intersects[0];
     }
