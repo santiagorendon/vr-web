@@ -14,7 +14,7 @@ var score = 0;
 var user;
 var sound;
 var distanceTraveled = 0;
-var planeSpeed = 0.05;
+var planeSpeed = 0.25;
 var maxPlaneSpeed = 0.65;
 var usingSpeedControls = false;
 var scoreLabel;
@@ -49,7 +49,7 @@ function preload() {
 }
 
 function increaseSpeed() {
-  if (planeSpeed < maxPlaneSpeed) {
+  if (planeSpeed <= maxPlaneSpeed-0.1) {
     planeSpeed += 0.1;
     engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
   }
@@ -198,7 +198,7 @@ function restartGame() {
   currentRender = 0;
   skyCurrentRender = skyRenderDistance;
   groundCurrentRender = groundRenderDistance;
-  planeSpeed = 0.15;
+  planeSpeed = 0.35;
   // reset sky
   document.getElementById("theSky").setAttribute("position", `0 0 ${distanceTraveled}`);
 
@@ -370,7 +370,8 @@ function renderNearbyObjects() {
 
 function drawScoreBoard() {
   scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
-  speedLabel.tag.setAttribute('text', 'value: ' + (Math.round(planeSpeed * 10000)) + ' mph ; color: rgb(255,255,255); align: center;');
+  speedLabel.tag.setAttribute('text', 'value: ' + Math.round(planeSpeed * 2308) + ' mph ; color: rgb(255,255,255); align: center;');
+  console.log("lit")
 }
 
 function deleteGameObjects() {
@@ -438,7 +439,7 @@ function collisionDetection() {
 
 function tryToTakeOff() {
   if (elevation >= 2 && !takeOff) { // increase speed once taken off
-    planeSpeed = 0.15;
+    planeSpeed = 0.35;
     engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
     takeOff = true;
   }
