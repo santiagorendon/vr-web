@@ -49,7 +49,7 @@ function preload() {
 }
 
 function increaseSpeed() {
-  if (planeSpeed <= maxPlaneSpeed-0.1) {
+  if (planeSpeed <= maxPlaneSpeed - 0.1) {
     planeSpeed += 0.1;
     engineSound.setVolume(map(planeSpeed, 0, maxPlaneSpeed, 0, 1));
   }
@@ -371,7 +371,6 @@ function renderNearbyObjects() {
 function drawScoreBoard() {
   scoreLabel.tag.setAttribute('text', 'value: ' + (score) + ' targets ; color: rgb(255,255,255); align: center;');
   speedLabel.tag.setAttribute('text', 'value: ' + Math.round(planeSpeed * 2308) + ' mph ; color: rgb(255,255,255); align: center;');
-  console.log("lit")
 }
 
 function deleteGameObjects() {
